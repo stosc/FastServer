@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -15,9 +14,9 @@ import (
 	"regexp"
 	"strconv"
 	"time"
-)
 
-var mux map[string]func(http.ResponseWriter, *http.Request)
+	"github.com/gorilla/mux"
+)
 
 type Myhandler struct{}
 type home struct {
@@ -46,15 +45,17 @@ func main() {
 		flag.Usage()
 		return
 	}
+	r := mux.NewRouter()
+	r.HandleFunc("/", index)
+	r.HandleFunc("/{fid:[0-9a-f]+}/{ext:[a-zA-Z]+}", FileHandler)
+	r.HandleFunc("/upload", upload)
+	r.HandleFunc("/file", StaticServer)
 	server := http.Server{
 		Addr:        ":8899",
-		Handler:     &Myhandler{},
+		Handler:     r,
 		ReadTimeout: 10 * time.Second,
 	}
-	mux = make(map[string]func(http.ResponseWriter, *http.Request))
-	mux["/"] = index
-	mux["/upload"] = upload
-	mux["/file"] = StaticServer
+
 	if !isDirExists(Upload_Dir) {
 		os.Mkdir(Upload_Dir, os.ModePerm)
 	}
@@ -65,11 +66,23 @@ func main() {
 	}
 }
 
-func (*Myhandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if h, ok := mux[r.URL.String()]; ok {
-		h(w, r)
-		return
+func FileHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	file := vars["fid"]
+	ext := vars["ext"]
+	fmt.Println(file, ".", ext)
+	path := buildFilePath(file)
+	fmt.Println(path)
+	filenaem := path + file + "." + ext
+	f, _ := ioutil.ReadFile(filenaem)
+	if !isImage(ext) {
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", file+"."+ext))
 	}
+	w.Write(f)
+}
+
+func (*Myhandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if ok, _ := regexp.MatchString("/css/", r.URL.String()); ok {
 		http.StripPrefix("/css/", http.FileServer(http.Dir("./css/"))).ServeHTTP(w, r)
 	} else {
@@ -117,22 +130,20 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		}
 		//计算md5
 		md5hash := md5.New()
-		if _, err := io.Copy(md5hash, file); err != nil {
+		if _, err := md5hash.Write(fd); err != nil {
 			fmt.Fprintf(w, "%v", "md5"+err.Error())
 			return
 		}
 		var m5 = hex.EncodeToString(md5hash.Sum([]byte("")))
-
 		//计算md5 End
 		filename := buildFilePath(m5) + m5 + fileext
-		//filename := m5 + fileext
 		fmt.Println("文件内容：", filename)
 		err = ioutil.WriteFile(filename, fd, 0666)
 		if err != nil {
 			fmt.Fprintf(w, "%v", "上传失败")
 			return
 		}
-		fmt.Fprintf(w, "%v", filename)
+		fmt.Fprintf(w, "%v", m5+fileext)
 	}
 }
 
@@ -199,12 +210,23 @@ func StaticServer(w http.ResponseWriter, r *http.Request) {
 }
 
 func check(name string) bool {
-	ext := []string{".exe", ".js", ".png"}
-
+	//fmt.Println(name)
+	ext := []string{".exe", ".js"}
 	for _, v := range ext {
 		if v == name {
 			return false
 		}
 	}
 	return true
+}
+
+func isImage(name string) bool {
+	fmt.Println(name)
+	ext := []string{"jpg", "png"}
+	for _, v := range ext {
+		if v == name {
+			return true
+		}
+	}
+	return false
 }
