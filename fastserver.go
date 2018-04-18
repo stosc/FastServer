@@ -59,12 +59,15 @@ func main() {
 	if !isDirExists(Upload_Dir) {
 		os.Mkdir(Upload_Dir, os.ModePerm)
 	}
-	f, _ := filepath.Abs(Upload_Dir)
+	f, err := filepath.Abs(Upload_Dir)
+	if err != nil {
+		fmt.Println(err)
+	}
 	fmt.Println("Server is running，key is ", keyValue, ",upload path is ", f)
 	if Upload_Dir == "" {
 		Upload_Dir = "./upload/"
 	}
-	err := server.ListenAndServe()
+	err = server.ListenAndServe()
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
