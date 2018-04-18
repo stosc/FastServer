@@ -59,7 +59,8 @@ func main() {
 	if !isDirExists(Upload_Dir) {
 		os.Mkdir(Upload_Dir, os.ModePerm)
 	}
-	fmt.Println("Server is running，key is ", keyValue, ",upload path is ", Upload_Dir)
+	f, _ := filepath.Abs(Upload_Dir)
+	fmt.Println("Server is running，key is ", keyValue, ",upload path is ", f)
 	if Upload_Dir == "" {
 		Upload_Dir = "./upload/"
 	}
@@ -115,7 +116,6 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		if keyValue != "" {
 			key := r.FormValue("key")
 			if key != keyValue {
-
 				fmt.Fprintf(w, "%v", "没有操作权限")
 				return
 			}
