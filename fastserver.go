@@ -123,19 +123,20 @@ func upload(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-
+		fmt.Println(1)
 		file, handler, err := r.FormFile("uploadfile")
 		if err != nil {
+			fmt.Println(err)
 			fmt.Fprintf(w, "%v", "上传错误")
 			return
 		}
-
+		fmt.Println(2)
 		fileext := filepath.Ext(handler.Filename)
 		if check(fileext) == false {
 			fmt.Fprintf(w, "%v", "不允许的上传类型")
 			return
 		}
-
+		fmt.Println(3)
 		fd, err := ioutil.ReadAll(file)
 		if err != nil {
 			fmt.Fprintf(w, "%v", "md5 read"+err.Error())
