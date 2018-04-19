@@ -12,6 +12,6 @@ COPY ./fastserver /fastserver
 COPY ./css /css
 COPY ./view /view
 
-ENTRYPOINT ["/FastServer", "-key=ee28314a-f7fc-2558-bd77-e09eda3d0119"]
-LABEL Name=fastserver Version=0.0.1
+ENTRYPOINT ["/FastServer", "-key="]
+LABEL Name=fastserver Version=1.0.1
 EXPOSE 8899
