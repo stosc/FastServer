@@ -131,7 +131,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		file, _, err := r.FormFile("uploadfile")
 		if err != nil {
 			fmt.Println(err)
-			fmt.Fprintf(w, "%v", "上传错误")
+			fmt.Fprintf(w, "%v", "上传错误:"+err.Error())
 			return
 		}
 		fd, err := ioutil.ReadAll(file)
@@ -158,7 +158,7 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		//fmt.Println("文件内容：", filename)
 		err = ioutil.WriteFile(filename, fd, 0666)
 		if err != nil {
-			fmt.Fprintf(w, "%v", "上传失败")
+			fmt.Fprintf(w, "%v", "上传失败:"+err.Error())
 			return
 		}
 		fmt.Fprintf(w, "%v", m5)
